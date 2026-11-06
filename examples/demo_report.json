@@ -1,0 +1,39 @@
+{
+  "title": "QuantEdge Bubble-Like Stress Demo",
+  "market": {
+    "symbol": "AAPL",
+    "spot": 124.82,
+    "volatility": 0.421,
+    "regime": "bubble_like"
+  },
+  "smile": {
+    "regime": "downside skew",
+    "atmVolatility": 0.421,
+    "skewSlope": -0.0018,
+    "curvature": 0.034,
+    "smileWidth": 0.118
+  },
+  "calibration": {
+    "meanAbsoluteError": 0.0031,
+    "rootMeanSquaredError": 0.0048,
+    "averageImpliedVolatility": 0.438
+  },
+  "microstructure": {
+    "averageSpread": 0.021,
+    "maxSpread": 0.094,
+    "averageSlippage": 0.0078,
+    "liquidityStressScore": 0.58,
+    "regime": "watch"
+  },
+  "backtest": {
+    "maxVaR95": 18.42,
+    "maxResidual": 2.91,
+    "maxLatencyMs": 4.72,
+    "points": [
+      { "tick": 64, "hurst": 0.54, "volatilityRoughness": 0.31, "valueAtRisk95": 8.12, "pnlExplainResidual": 0.81, "latencyMs": 1.94 },
+      { "tick": 128, "hurst": 0.61, "volatilityRoughness": 0.45, "valueAtRisk95": 11.35, "pnlExplainResidual": 1.44, "latencyMs": 2.72 },
+      { "tick": 192, "hurst": 0.68, "volatilityRoughness": 0.63, "valueAtRisk95": 15.80, "pnlExplainResidual": 2.37, "latencyMs": 3.98 },
+      { "tick": 256, "hurst": 0.71, "volatilityRoughness": 0.69, "valueAtRisk95": 18.42, "pnlExplainResidual": 2.91, "latencyMs": 4.72 }
+    ]
+  }
+}

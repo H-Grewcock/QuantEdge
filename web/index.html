@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QuantEdge Dashboard</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">QE</div>
+        <div>
+          <h1>QuantEdge</h1>
+          <p>Fractal market dynamics and option risk.</p>
+        </div>
+      </div>
+
+      <section class="control-section">
+        <h2>Market Model</h2>
+        <label>
+          Regime
+          <select id="regime">
+            <option value="warped">Multifractal trading time</option>
+            <option value="brownian">Brownian baseline</option>
+            <option value="persistent">Persistent fractional trend</option>
+            <option value="antipersistent">Anti-persistent chop</option>
+            <option value="bubble_like">Bubble-like run-up</option>
+            <option value="volatility_shock">Volatility shock</option>
+            <option value="crash">Clustered crash</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Hurst exponent <output id="hurstOut">0.62</output></span>
+          <input id="hurst" type="range" min="0.20" max="0.85" step="0.01" value="0.62">
+        </label>
+
+        <label>
+          <span>Trading-time clustering <output id="clusterOut">0.72</output></span>
+          <input id="cluster" type="range" min="0" max="1" step="0.01" value="0.72">
+        </label>
+
+        <label>
+          <span>Annual volatility <output id="volOut">26%</output></span>
+          <input id="vol" type="range" min="0.08" max="0.85" step="0.01" value="0.26">
+        </label>
+      </section>
+
+      <section class="control-section">
+        <h2>Run Setup</h2>
+        <div class="field-grid">
+          <label>Ticks <input id="steps" type="number" min="80" max="1400" step="20" value="500"></label>
+          <label>Fan paths <input id="paths" type="number" min="6" max="80" step="2" value="28"></label>
+          <label>Strike <input id="strike" type="number" min="40" max="200" step="1" value="100"></label>
+          <label>Maturity <input id="maturity" type="number" min="0.05" max="3" step="0.05" value="0.5"></label>
+        </div>
+        <div class="button-row">
+          <button id="run">Run</button>
+          <button class="secondary" id="reset">Reset</button>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <h2>Load Outputs</h2>
+        <label>Tick CSV <input id="tickCsv" type="file" accept=".csv"></label>
+        <label>Demo report JSON <input id="demoReportJson" type="file" accept=".json"></label>
+        <p id="loadLog">Built-in simulation is active.</p>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h1>Runtime Risk Dashboard</h1>
+          <p>Full QuantEdge view: Brownian/fractal path lab, pricing, gamma, portfolio, correlation, microstructure, and runtime pressure.</p>
+        </div>
+        <div class="status-strip">
+          <span id="sourcePill">source: simulation</span>
+          <span id="regimePill">regime: warped</span>
+          <span id="qualityPill">data: clean</span>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Dashboard sections">
+        <button class="tab active" data-view="overview">Overview</button>
+        <button class="tab" data-view="risk">Risk Surfaces</button>
+        <button class="tab" data-view="portfolio">Portfolio</button>
+        <button class="tab" data-view="research">Research</button>
+      </nav>
+
+      <section class="view active" id="view-overview">
+        <div class="layout-grid">
+          <article class="panel wide">
+            <div class="panel-head">
+              <h2>Price Path</h2>
+              <span>Brownian reference vs selected fractal model</span>
+            </div>
+            <div class="chart-frame">
+              <canvas id="priceChart"></canvas>
+              <div class="chart-tooltip" id="priceTooltip" role="status" aria-live="polite"></div>
+            </div>
+            <div class="legend">
+              <span><i class="line blue"></i>Brownian</span>
+              <span><i class="line green"></i>Selected</span>
+              <span><i class="line amber"></i>Trading time</span>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><h2>Market</h2></div>
+            <dl class="metrics">
+              <div><dt>Symbol</dt><dd id="symbol">AAPL</dd></div>
+              <div><dt>Spot</dt><dd id="spot">0.000</dd></div>
+              <div><dt>Volatility</dt><dd id="volMetric">0.0%</dd></div>
+              <div><dt>Ticks</dt><dd id="tickCount">0</dd></div>
+              <div><dt>Estimated H</dt><dd id="hurstMetric">0.500</dd></div>
+              <div><dt>Trading time</dt><dd id="clockMetric">0.000</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><h2>Pricing</h2></div>
+            <dl class="metrics">
+              <div><dt>Black-Scholes</dt><dd id="bsPrice">0.000</dd></div>
+              <div><dt>Binomial tree</dt><dd id="treePrice">0.000</dd></div>
+              <div><dt>Monte Carlo</dt><dd id="mcPrice">0.000</dd></div>
+              <div><dt>Fractal Brownian MC</dt><dd id="fractalPrice">0.000</dd></div>
+              <div><dt>MC error</dt><dd id="mcError">0.000</dd></div>
+              <div><dt>Implied vol</dt><dd id="iv">0.0%</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><h2>Fractal Diagnostics</h2></div>
+            <dl class="metrics">
+              <div><dt>Delta</dt><dd id="delta">0.000</dd></div>
+              <div><dt>Gamma</dt><dd id="gamma">0.000</dd></div>
+              <div><dt>Vega</dt><dd id="vega">0.000</dd></div>
+              <div><dt>Path roughness</dt><dd id="pathRough">0.000</dd></div>
+              <div><dt>Increment corr</dt><dd id="incCorr">0.000</dd></div>
+              <div><dt>Bubble score</dt><dd id="bubbleScore">0.000</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><h2>Runtime</h2></div>
+            <dl class="metrics">
+              <div><dt>Wall latency</dt><dd id="wallLatency">0.00 ms</dd></div>
+              <div><dt>Queue depth</dt><dd id="queueDepth">0</dd></div>
+              <div><dt>P95 task latency</dt><dd id="p95">0.00 ms</dd></div>
+              <div><dt>Path budget</dt><dd id="pathBudget">0</dd></div>
+            </dl>
+            <div class="action-list" id="actions"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-risk">
+        <div class="layout-grid">
+          <article class="panel half">
+            <div class="panel-head"><h2>Gamma Surface</h2><span>At-the-money cliffs and model disagreement</span></div>
+            <canvas id="gammaHeatmap"></canvas>
+            <table>
+              <thead><tr><th>Strike</th><th>Maturity</th><th>Gamma</th><th>Disagreement</th></tr></thead>
+              <tbody id="surfaceRows"></tbody>
+            </table>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><h2>Risk Alerts</h2></div>
+            <div class="alert-list" id="alerts"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><h2>Smile & Calibration</h2></div>
+            <dl class="metrics">
+              <div><dt>Smile regime</dt><dd id="smileRegime">normal</dd></div>
+              <div><dt>Smile width</dt><dd id="smileWidth">0.000</dd></div>
+              <div><dt>Skew slope</dt><dd id="skewSlope">0.000</dd></div>
+              <div><dt>Calibration MAE</dt><dd id="calibrationMae">0.000</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel half">
+            <div class="panel-head"><h2>Correlation Risk</h2></div>
+            <canvas id="correlationHeatmap"></canvas>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-portfolio">
+        <div class="layout-grid">
+          <article class="panel">
+            <div class="panel-head"><h2>Portfolio Risk</h2></div>
+            <dl class="metrics">
+              <div><dt>Base value</dt><dd id="portfolioBase">0.000</dd></div>
+              <div><dt>Total Delta</dt><dd id="portfolioDelta">0.000</dd></div>
+              <div><dt>Total Gamma</dt><dd id="portfolioGamma">0.000</dd></div>
+              <div><dt>Total Vega</dt><dd id="portfolioVega">0.000</dd></div>
+              <div><dt>Worst P&L</dt><dd id="portfolioWorst">0.000</dd></div>
+              <div><dt>VaR 95</dt><dd id="portfolioVar">0.000</dd></div>
+              <div><dt>ES 95</dt><dd id="portfolioEs">0.000</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel half">
+            <div class="panel-head"><h2>Position Contributions</h2></div>
+            <table>
+              <thead><tr><th>Position</th><th>Value</th><th>Delta</th><th>Gamma</th><th>Vega</th></tr></thead>
+              <tbody id="positionRows"></tbody>
+            </table>
+          </article>
+
+          <article class="panel half">
+            <div class="panel-head"><h2>Scenario Risk</h2></div>
+            <table>
+              <thead><tr><th>Scenario</th><th>Spot</th><th>Vol</th><th>P&L</th></tr></thead>
+              <tbody id="scenarioRows"></tbody>
+            </table>
+          </article>
+
+          <article class="panel half">
+            <div class="panel-head"><h2>P&L Explain</h2></div>
+            <table>
+              <thead><tr><th>Leg</th><th>Full</th><th>Delta</th><th>DGV</th><th>Residual</th></tr></thead>
+              <tbody id="pnlExplainRows"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-research">
+        <div class="layout-grid">
+          <article class="panel third">
+            <div class="panel-head"><h2>Increment Noise</h2></div>
+            <canvas id="incrementChart"></canvas>
+          </article>
+          <article class="panel third">
+            <div class="panel-head"><h2>Trading Time</h2></div>
+            <canvas id="clockChart"></canvas>
+          </article>
+          <article class="panel third">
+            <div class="panel-head"><h2>Path Fan</h2></div>
+            <canvas id="fanChart"></canvas>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><h2>Microstructure</h2></div>
+            <dl class="metrics">
+              <div><dt>Average spread</dt><dd id="avgSpread">0.000</dd></div>
+              <div><dt>Max spread</dt><dd id="maxSpread">0.000</dd></div>
+              <div><dt>Average slippage</dt><dd id="avgSlippage">0.000</dd></div>
+              <div><dt>Liquidity regime</dt><dd id="liquidityRegime">normal</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel wide">
+            <div class="panel-head"><h2>Backtest Research Trace</h2></div>
+            <table>
+              <thead><tr><th>Tick</th><th>Hurst</th><th>Vol rough</th><th>VaR 95</th><th>P&L residual</th><th>Latency</th></tr></thead>
+              <tbody id="backtestRows"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/utils.js" defer></script>
+  <script src="js/models.js" defer></script>
+  <script src="js/charts.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>
